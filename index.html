@@ -151,35 +151,35 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
 .cal-nav{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0}
 .cal-nav-btn{width:32px;height:32px;border:var(--glass-border);background:var(--glass);backdrop-filter:var(--glass-blur-sm);-webkit-backdrop-filter:var(--glass-blur-sm);border-radius:10px;cursor:pointer;font-size:16px;color:var(--text-secondary);display:flex;align-items:center;justify-content:center;transition:all .15s;box-shadow:var(--glass-highlight)}
 .cal-nav-btn:hover{background:var(--glass-strong);color:var(--text-primary)}
-.cal-month{font-size:18px;font-weight:700;color:var(--text-primary);min-width:140px;text-align:center}
+.cal-month{font-size:20px;font-weight:700;color:var(--text-primary);min-width:140px;text-align:center}
 .cal-today-btn{font-size:12px;padding:5px 14px;border:var(--glass-border);background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:10px;cursor:pointer;color:var(--text-secondary);transition:all .15s;box-shadow:var(--glass-highlight)}
 .cal-today-btn:hover{background:var(--glass-strong);color:var(--accent)}
 .cal-table{flex:1;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:var(--glass-blur-sm);-webkit-backdrop-filter:var(--glass-blur-sm);border:var(--glass-border);border-radius:14px;overflow:hidden;box-shadow:var(--glass-shadow)}
 .cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid rgba(0,0,0,.06);flex-shrink:0}
-.cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);padding:8px 0;text-transform:uppercase}
+.cal-dow{text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);padding:10px 0;text-transform:uppercase;letter-spacing:.5px}
 .cal-dow.weekend{color:#c0c0c8}
-.cal-body{flex:1;display:grid;overflow:hidden}
-.cal-week-wrap{display:flex;flex-direction:column;border-bottom:1px solid rgba(0,0,0,.04);position:relative;min-height:0;overflow:hidden}
+.cal-body{flex:1;overflow-y:auto;overflow-x:hidden;scroll-snap-type:y proximity}
+.cal-week-wrap{display:flex;flex-direction:column;border-bottom:1px solid rgba(0,0,0,.04);position:relative;min-height:160px;scroll-snap-align:start}
 .cal-week-wrap:last-child{border-bottom:none}
 .cal-week{display:grid;grid-template-columns:repeat(7,1fr);flex-shrink:0}
-.cal-day{border-right:1px solid rgba(0,0,0,.03);padding:4px 8px;cursor:pointer;transition:background .12s;min-height:24px}
+.cal-day{border-right:1px solid rgba(0,0,0,.03);padding:6px 10px;cursor:pointer;transition:background .12s;min-height:28px}
 .cal-day:last-child{border-right:none}
 .cal-day:hover{background:rgba(99,102,241,.04)}
 .cal-day.other-month{opacity:.3}
 .cal-day.today{background:rgba(239,68,68,.05)}
 .cal-day.weekend{background:rgba(0,0,0,.012)}
-.cal-date{font-size:11px;font-weight:600;color:var(--text-secondary);display:inline-block}
-.cal-day.today .cal-date{color:#fff;background:#ef4444;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+.cal-date{font-size:13px;font-weight:600;color:var(--text-secondary);display:inline-block}
+.cal-day.today .cal-date{color:#fff;background:#ef4444;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
 .cal-day.other-month .cal-date{color:#bbb}
-.cal-lanes{flex:1;padding:1px 0;overflow:hidden;background:repeating-linear-gradient(90deg,transparent,transparent calc(100%/7 - 1px),rgba(0,0,0,.03) calc(100%/7 - 1px),rgba(0,0,0,.03) calc(100%/7))}
-.cal-event-lane{display:grid;grid-template-columns:repeat(7,1fr);height:20px;margin-bottom:1px}
-.cal-bar{border-radius:4px;color:#fff;font-size:9.5px;font-weight:500;padding:0 5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;height:18px;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.1);border:1px solid rgba(255,255,255,.18);margin:0 1px}
+.cal-lanes{flex:1;padding:2px 0;overflow:hidden;background:repeating-linear-gradient(90deg,transparent,transparent calc(100%/7 - 1px),rgba(0,0,0,.03) calc(100%/7 - 1px),rgba(0,0,0,.03) calc(100%/7))}
+.cal-event-lane{display:grid;grid-template-columns:repeat(7,1fr);height:24px;margin-bottom:2px}
+.cal-bar{border-radius:5px;color:#fff;font-size:11px;font-weight:500;padding:0 6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;height:22px;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.1);border:1px solid rgba(255,255,255,.18);margin:0 1px}
 .cal-bar:hover{box-shadow:0 2px 8px rgba(0,0,0,.16);transform:translateY(-1px);z-index:2}
 .cal-bar.done{opacity:.3;text-decoration:line-through}
 .cal-bar.cont-left{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0;border-left:none}
 .cal-bar.cont-right{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0;border-right:none}
-.cal-more-row{display:grid;grid-template-columns:repeat(7,1fr);height:14px;flex-shrink:0}
-.cal-more{font-size:9px;color:var(--text-muted);text-align:center;cursor:pointer;border-radius:4px;line-height:14px}
+.cal-more-row{display:grid;grid-template-columns:repeat(7,1fr);height:18px;flex-shrink:0}
+.cal-more{font-size:10px;color:var(--text-muted);text-align:center;cursor:pointer;border-radius:4px;line-height:18px}
 .cal-more:hover{background:rgba(99,102,241,.06);color:var(--accent)}
 
 /* ── Modal ── */
@@ -994,12 +994,8 @@ function renderCalendar() {
     return durB - durA; // longer tasks first
   });
 
-  // Dynamically compute max visible lanes based on available height
-  const contentEl = document.getElementById('content');
-  const availH = contentEl.offsetHeight - 60; // subtract nav + dow header + padding
-  const rowH = availH / numWeeks;
-  const DYNAMIC_MAX_LANES = Math.max(2, Math.floor((rowH - 30 - 16) / 21)); // 30=date row, 16=more row, 21=lane height
-  const MAX_LANES = Math.min(DYNAMIC_MAX_LANES, 8);
+  // Fixed lane count — rows scroll vertically so we can show more
+  const MAX_LANES = 6;
 
   let html = `<div class="cal-wrap">`;
   // Navigation
@@ -1046,7 +1042,7 @@ function renderCalendar() {
   });
 
   // Calendar body - all weeks with equal row heights
-  html += `<div class="cal-body" style="grid-template-rows:repeat(${numWeeks},1fr)">`;
+  html += `<div class="cal-body">`;
 
   weekData.forEach((wd, wi) => {
     const weekDays = wd.weekDays;
