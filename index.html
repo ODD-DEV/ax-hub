@@ -503,7 +503,10 @@ function load() {
 
   nextId = Math.max(100, ...tasks.map(t=>t.id)) + 1;
 
-  try { assignees=JSON.parse(localStorage.getItem(LS+'assignees'))||['미지정']; } catch(e){ assignees=['미지정']; }
+  const DEFAULT_ASSIGNEES = ['미지정','창석','로제','승완','대윤','이동','민호','수아','종필','은상'];
+  try { assignees=JSON.parse(localStorage.getItem(LS+'assignees')); if(!assignees||!assignees.length) assignees=[...DEFAULT_ASSIGNEES]; } catch(e){ assignees=[...DEFAULT_ASSIGNEES]; }
+  // Ensure all assignees from tasks are included
+  tasks.forEach(t=>{ if(t.assignee && !assignees.includes(t.assignee)) assignees.push(t.assignee); });
   if (!assignees.includes('미지정')) assignees.unshift('미지정');
   try { collapsed=JSON.parse(localStorage.getItem(LS+'collapsed'))||{}; } catch(e){ collapsed={}; }
 
