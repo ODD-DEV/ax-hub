@@ -548,6 +548,68 @@ function saveCollapsed() {
   localStorage.setItem(LS + 'collapsed', JSON.stringify(collapsed));
 }
 
+// ═══════════════════════════════════════
+// UNDO SYSTEM (Cmd+Z / Ctrl+Z)
+// ═══════════════════════════════════════
+const undoStack = [];
+const MAX_UNDO = 50;
+
+function pushUndo() {
+  undoStack.push({
+    tasks: JSON.parse(JSON.stringify(tasks)),
+    assignees: [...assignees],
+    nextId: nextId
+  });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+}
+
+async function undo() {
+  if (!undoStack.length) return;
+  const snap = undoStack.pop();
+  const oldTaskIds = new Set(tasks.map(t => t.id));
+  const newTaskIds = new Set(snap.tasks.map(t => t.id));
+
+  tasks = snap.tasks;
+  assignees = snap.assignees;
+  nextId = snap.nextId;
+  render();
+
+  // Sync restored state to Supabase
+  try {
+    // Delete tasks that were added after snapshot
+    const toDelete = [...oldTaskIds].filter(id => !newTaskIds.has(id));
+    for (const id of toDelete) await sb.from('timeline_tasks').delete().eq('id', id);
+    // Upsert all restored tasks
+    for (const t of tasks) await saveTask(t);
+    // Restore assignees
+    await saveAssignees();
+  } catch (e) { console.error('undo sync error:', e); }
+
+  showUndoToast();
+}
+
+function showUndoToast() {
+  let toast = document.getElementById('undoToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'undoToast';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,40,.92);backdrop-filter:blur(16px);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08)';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = '↩ 실행취소 완료';
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(-50%) translateY(20px)'; }, 1500);
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    undo();
+  }
+});
+
 async function saveTask(task) {
   try {
     const idx = tasks.indexOf(task);
@@ -882,7 +944,7 @@ function bindGanttEvents(cols, colW) {
     c.addEventListener('click', e => {
       e.stopPropagation();
       const t = tasks.find(t=>t.id===+c.dataset.id);
-      if(t){t.status=t.status==='done'?'not-started':'done';render();saveTask(t);}
+      if(t){pushUndo();t.status=t.status==='done'?'not-started':'done';render();saveTask(t);}
     });
   });
 
@@ -915,6 +977,7 @@ function bindGanttEvents(cols, colW) {
       tip.classList.remove('show');
       const task = tasks.find(t=>t.id===+bar.dataset.id);
       if(!task) return;
+      pushUndo();
       const startX = e.clientX, oS = dayOff(task.start), oE = dayOff(task.end), dur = oE-oS;
       let moved = false;
       const onMove = e2 => {
@@ -950,6 +1013,7 @@ function bindGanttEvents(cols, colW) {
       const bar = h.closest('.gantt-bar');
       const task = tasks.find(t=>t.id===+bar.dataset.id);
       if(!task) return;
+      pushUndo();
       const isLeft = h.classList.contains('l');
       const startX = e.clientX, oS = dayOff(task.start), oE = dayOff(task.end);
       const onMove = e2 => {
@@ -1019,7 +1083,7 @@ function renderList() {
     h.addEventListener('click', () => { collapsed[h.dataset.cat]=!collapsed[h.dataset.cat]; saveCollapsed(); render(); });
   });
   el.querySelectorAll('.gantt-check').forEach(c => {
-    c.addEventListener('click', e => { e.stopPropagation(); const t=tasks.find(t=>t.id===+c.dataset.id); if(t){t.status=t.status==='done'?'not-started':'done';render();saveTask(t);} });
+    c.addEventListener('click', e => { e.stopPropagation(); const t=tasks.find(t=>t.id===+c.dataset.id); if(t){pushUndo();t.status=t.status==='done'?'not-started':'done';render();saveTask(t);} });
   });
   el.querySelectorAll('.list-row').forEach(r => {
     r.addEventListener('click', e => { if(!e.target.classList.contains('gantt-check'))openTaskModal(+r.dataset.id); });
@@ -1283,6 +1347,7 @@ function bindDragReorder(container, rowSelector) {
       if(!dragTask||!targetTask) return;
       // Only allow reorder within same category
       if(dragTask.cat !== targetTask.cat) return;
+      pushUndo();
 
       const rect = row.getBoundingClientRect();
       const after = e.clientY > rect.top + rect.height / 2;
@@ -1363,12 +1428,14 @@ document.getElementById('mSave').onclick = () => {
     start:document.getElementById('mStart').value, end:document.getElementById('mEnd').value,
     status:document.getElementById('mStatus').value, note:document.getElementById('mNote').value,
     cost:parseInt(document.getElementById('mCost').value)||0 };
+  pushUndo();
   if(editingTask) { Object.assign(editingTask, d); saveTask(editingTask); } else { const newTask = {id:nextId++,...d}; tasks.push(newTask); saveTask(newTask); }
   closeTaskModal();
 };
 
 document.getElementById('mDel').onclick = () => {
   if(editingTask&&confirm(`"${editingTask.name}" 삭제?`)){
+    pushUndo();
     const delId = editingTask.id; tasks=tasks.filter(t=>t.id!==delId); deleteTask(delId); closeTaskModal();
   }
 };
@@ -1400,6 +1467,7 @@ function renderAManage() {
   el.querySelectorAll('.btn-del').forEach(b => b.onclick = () => {
     const n=b.dataset.n, cnt=tasks.filter(t=>t.assignee===n).length;
     if(cnt>0&&!confirm(`"${n}" 삭제 시 ${cnt}건이 미지정으로 변경됩니다.`))return;
+    pushUndo();
     const affectedTasks = tasks.filter(t=>t.assignee===n);
     affectedTasks.forEach(t=>{t.assignee='미지정';});
     assignees=assignees.filter(x=>x!==n);
@@ -1411,6 +1479,7 @@ function renderAManage() {
 function addAssignee() {
   const inp=document.getElementById('newAName'), name=inp.value.trim();
   if(!name||assignees.includes(name)){inp.value='';return;}
+  pushUndo();
   assignees.push(name); saveAssignees(); inp.value=''; renderAManage(); render();
 }
 document.getElementById('btnAddA').onclick = e => { e.preventDefault(); addAssignee(); };
