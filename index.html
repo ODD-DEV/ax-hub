@@ -47,6 +47,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
 .progress-pct{font-size:12px;color:var(--text-secondary);min-width:36px;text-align:right}
 
 .sb-title{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:14px 16px 4px}
+.sb-toggle{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;transition:color .15s}
+.sb-toggle:hover{color:var(--text-secondary)}
+.sb-toggle-arrow{font-size:8px;transition:transform .2s;display:inline-block}
+.sb-toggle.collapsed .sb-toggle-arrow{transform:rotate(-90deg)}
+.sb-collapsible{overflow:hidden;transition:max-height .25s ease;max-height:600px}
+.sb-collapsible.collapsed{max-height:0!important;padding:0 6px}
 .sb-list{padding:0 6px 4px}
 .sb-item{padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;border-radius:10px;transition:all .18s;font-size:13px;color:var(--text-secondary);border-left:3px solid transparent}
 .sb-item:hover{background:rgba(255,255,255,.35)}
@@ -279,10 +285,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
         <span id="totalCostVal">₩0</span>
       </div>
     </div>
-    <div class="sb-title">카테고리</div>
-    <div class="sb-list" id="catList"></div>
-    <div class="sb-title">담당자</div>
-    <div class="sb-list" id="assigneeList"></div>
+    <div class="sb-title sb-toggle" id="toggleCat"><span class="sb-toggle-arrow">▼</span> 카테고리</div>
+    <div class="sb-list sb-collapsible" id="catList"></div>
+    <div class="sb-title sb-toggle" id="toggleAssignee"><span class="sb-toggle-arrow">▼</span> 담당자</div>
+    <div class="sb-list sb-collapsible" id="assigneeList"></div>
     <div class="sb-spacer"></div>
     <div class="sb-bottom">
       <button class="btn" id="btnManageAssignees">담당자 관리</button>
@@ -1331,6 +1337,16 @@ document.getElementById('sidebarToggle').onclick = () => {
 sidebarOverlay.onclick = () => {
   sidebarEl.classList.remove('open');
   sidebarOverlay.classList.remove('show');
+};
+
+// Sidebar section toggle
+document.getElementById('toggleCat').onclick = () => {
+  document.getElementById('toggleCat').classList.toggle('collapsed');
+  document.getElementById('catList').classList.toggle('collapsed');
+};
+document.getElementById('toggleAssignee').onclick = () => {
+  document.getElementById('toggleAssignee').classList.toggle('collapsed');
+  document.getElementById('assigneeList').classList.toggle('collapsed');
 };
 
 // Keyboard
