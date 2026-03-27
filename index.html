@@ -287,7 +287,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h1>Glyph Launching Timeline</h1>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h1>Glyph Launching Timeline</h1>
+        <button class="sb-close-btn" id="sidebarClose" title="사이드바 닫기 ⌘\">«</button>
+      </div>
       <p>글리프 런칭 타임라인</p>
       <div class="progress-wrap">
         <div class="progress-bar-bg"><div class="progress-bar-fill" id="gProg"></div></div>
@@ -297,9 +300,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
         <span style="color:var(--text-muted);font-weight:400">전체 비용</span>
         <span id="totalCostVal">₩0</span>
       </div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:flex-end;padding:6px 10px 0">
-      <button class="sb-close-btn" id="sidebarClose" title="사이드바 닫기 ⌘\">«</button>
     </div>
     <div class="sb-title sb-toggle" id="toggleCat"><span class="sb-toggle-arrow">▼</span> 카테고리</div>
     <div class="sb-list sb-collapsible" id="catList"></div>
