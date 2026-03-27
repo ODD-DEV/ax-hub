@@ -71,8 +71,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
 .btn-primary{background:linear-gradient(135deg,#6366f1,#818cf8);border:1px solid rgba(255,255,255,.25);color:#fff;box-shadow:0 2px 12px var(--accent-glow), var(--glass-highlight)}
 .btn-primary:hover{background:linear-gradient(135deg,#5558e6,#7578f5);box-shadow:0 4px 18px var(--accent-glow), var(--glass-highlight)}
 .btn-primary:active{opacity:.9}
-.btn-notion{background:var(--glass);color:var(--text-primary)}
-.btn-notion:hover{background:var(--glass-strong)}
 .btn-sm{padding:4px 8px;font-size:10px}
 .zoom-controls{display:flex;align-items:center;gap:4px;background:var(--glass-subtle);border-radius:12px;padding:2px;border:var(--glass-border);box-shadow:var(--glass-highlight)}
 .zoom-btn{width:26px;height:26px;border:none;background:none;color:var(--text-muted);cursor:pointer;border-radius:8px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .12s}
@@ -203,12 +201,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
 .btn-del{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);color:#ef4444;margin-right:auto}
 .btn-del:hover{background:rgba(239,68,68,.12);border-color:#ef4444}
 
-/* ── Notion Settings Modal ── */
-.notion-status{display:flex;align-items:center;gap:6px;font-size:11px;padding:6px 0}
-.notion-status .dot{width:8px;height:8px;border-radius:50%}
-.notion-status .dot.connected{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,.4)}
-.notion-status .dot.disconnected{background:#f87171;box-shadow:0 0 6px rgba(248,113,113,.4)}
-.notion-sync-info{font-size:10px;color:var(--text-muted);margin-top:4px}
 
 /* Tooltip */
 .tip{position:fixed;background:var(--glass-strong);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:var(--glass-border-light);border-radius:14px;padding:10px 14px;z-index:50;pointer-events:none;display:none;box-shadow:var(--glass-highlight), var(--glass-shadow-lg);max-width:260px}
@@ -248,7 +240,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
   .toolbar .btn:not(.view-btn):not(.zoom-btn):not(.btn-primary)::before{font-size:11px}
   #btnExpandAll{font-size:0!important}#btnExpandAll::before{content:'펼침';font-size:10px}
   #btnCollapseAll{font-size:0!important}#btnCollapseAll::before{content:'접기';font-size:10px}
-  #btnNotionSync{font-size:0!important}#btnNotionSync::before{content:'⟳';font-size:14px}
   #btnExport{display:none}
 }
 @media(max-width:600px){
@@ -314,7 +305,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
       <div class="toolbar-spacer"></div>
       <button class="btn" id="btnExpandAll">모두 펼치기</button>
       <button class="btn" id="btnCollapseAll">모두 접기</button>
-      <button class="btn btn-notion" id="btnNotionSync">⟳ Notion 동기화</button>
       <button class="btn" id="btnExport">내보내기</button>
       <button class="btn btn-primary" id="btnAddTask">+ 항목 추가</button>
     </div>
@@ -369,37 +359,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
   </div>
 </div>
 
-<!-- Notion Settings Modal -->
-<div class="modal-bg" id="notionModal">
-  <div class="modal">
-    <div class="modal-top"><h3>Notion 연동 설정</h3><button class="modal-x" id="nmClose">&times;</button></div>
-    <div class="modal-body">
-      <div class="notion-status" id="notionStatus">
-        <div class="dot disconnected"></div><span>연결 안 됨</span>
-      </div>
-      <div class="fld"><label>Notion Integration Token</label><input id="nToken" type="password" placeholder="ntn_..."></div>
-      <div class="fld"><label>Database ID (비워두면 자동 생성)</label><input id="nDbId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
-      <div class="fld"><label>상위 Page ID (DB 자동 생성 시 필요)</label><input id="nPageId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
-      <p style="font-size:10px;color:#999;margin-bottom:12px">※ Notion Integration 생성 후 해당 페이지에 연결(Connection) 필수</p>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" id="btnNotionSave">저장 및 연결 테스트</button>
-        <button class="btn" id="btnNotionCreateDb">DB 자동 생성</button>
-      </div>
-      <div class="notion-sync-info" id="notionSyncInfo"></div>
-      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e8e8ec">
-        <button class="btn" id="btnNotionPush" style="width:100%;justify-content:center">전체 → Notion 업로드</button>
-        <div style="height:6px"></div>
-        <button class="btn" id="btnNotionPull" style="width:100%;justify-content:center">Notion → 로컬 다운로드</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 // ═══════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════
-const PROXY = 'https://odd-ai-proxy.swanky-fawn.workers.dev/notion/';
 const COLORS = {sales:'#f59e0b',dev:'#10b981',package:'#6366f1',content:'#ec4899',channel:'#3b82f6',logistics:'#8b5cf6',legal:'#ef4444',vmd:'#14b8a6'};
 const GRADIENTS = {
   sales:'linear-gradient(135deg,#f59e0b,#f97316)',
@@ -435,7 +399,6 @@ const TOTAL_DAYS = Math.ceil((TL_END - TL_START) / 864e5);
 let tasks=[], assignees=['미지정','창석','로제','승완','대윤','이동','민호','수아','종필','은상'], collapsed={}, currentView='timeline';
 let calYear=2026, calMonth=2; // 0-indexed: 2=March
 let activeCat=null, activeAssignee=null, editingTask=null, nextId=100;
-let notionToken='', notionDbId='', notionPageId='';
 
 // ═══════════════════════════════════════
 // DEFAULT DATA
@@ -516,19 +479,11 @@ function load() {
   if (!assignees.includes('미지정')) assignees.unshift('미지정');
   try { collapsed=JSON.parse(localStorage.getItem(LS+'collapsed'))||{}; } catch(e){ collapsed={}; }
 
-  notionToken = localStorage.getItem(LS+'ntoken')||'';
-  notionDbId = localStorage.getItem(LS+'ndbid')||'';
-  notionPageId = localStorage.getItem(LS+'npageid')||'';
 }
 function save() {
   localStorage.setItem(LS+'tasks', JSON.stringify(tasks));
   localStorage.setItem(LS+'assignees', JSON.stringify(assignees));
   localStorage.setItem(LS+'collapsed', JSON.stringify(collapsed));
-}
-function saveNotion() {
-  localStorage.setItem(LS+'ntoken', notionToken);
-  localStorage.setItem(LS+'ndbid', notionDbId);
-  localStorage.setItem(LS+'npageid', notionPageId);
 }
 
 // ═══════════════════════════════════════
@@ -1334,187 +1289,6 @@ function addAssignee() {
 document.getElementById('btnAddA').onclick = e => { e.preventDefault(); addAssignee(); };
 document.getElementById('newAName').onkeydown = e=>{ if(e.key==='Enter'){e.preventDefault(); addAssignee();} };
 
-// ═══════════════════════════════════════
-// NOTION INTEGRATION
-// ═══════════════════════════════════════
-function openNotionModal() {
-  document.getElementById('notionModal').classList.add('show');
-  document.getElementById('nToken').value = notionToken;
-  document.getElementById('nDbId').value = notionDbId;
-  document.getElementById('nPageId').value = notionPageId;
-  updateNotionStatus();
-}
-function closeNotionModal(){ document.getElementById('notionModal').classList.remove('show'); }
-document.getElementById('nmClose').onclick = closeNotionModal;
-document.getElementById('notionModal').onclick = e=>{ if(e.target.id==='notionModal')closeNotionModal(); };
-
-function updateNotionStatus() {
-  const el = document.getElementById('notionStatus');
-  if (notionToken && notionDbId) {
-    el.innerHTML = '<div class="dot connected"></div><span style="color:#4ade80">연결됨</span>';
-  } else {
-    el.innerHTML = '<div class="dot disconnected"></div><span style="color:#f87171">연결 안 됨</span>';
-  }
-}
-
-async function notionFetch(path, method='GET', body=null) {
-  const opts = { method, headers: { 'Content-Type':'application/json', 'x-notion-key': notionToken } };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(PROXY + path, opts);
-  return r.json();
-}
-
-document.getElementById('btnNotionSync').onclick = () => {
-  if (notionToken && notionDbId) { notionPush(); }
-  else { openNotionModal(); }
-};
-
-document.getElementById('btnNotionSave').onclick = async () => {
-  notionToken = document.getElementById('nToken').value.trim();
-  notionDbId = document.getElementById('nDbId').value.trim();
-  notionPageId = document.getElementById('nPageId').value.trim();
-  saveNotion();
-
-  if (!notionToken) { alert('Token을 입력하세요'); return; }
-
-  const info = document.getElementById('notionSyncInfo');
-  info.textContent = '연결 테스트 중...';
-  try {
-    const res = await notionFetch('users/me');
-    if (res.object === 'user') {
-      info.textContent = `연결 성공! (${res.name || res.id})`;
-      updateNotionStatus();
-    } else {
-      info.textContent = '연결 실패: ' + (res.message || JSON.stringify(res));
-    }
-  } catch(e) { info.textContent = '오류: ' + e.message; }
-};
-
-document.getElementById('btnNotionCreateDb').onclick = async () => {
-  if (!notionToken) { alert('Token을 먼저 입력하세요'); return; }
-  const pageId = document.getElementById('nPageId').value.trim();
-  if (!pageId) { alert('상위 Page ID를 입력하세요'); return; }
-
-  const info = document.getElementById('notionSyncInfo');
-  info.textContent = 'DB 생성 중...';
-
-  try {
-    const res = await notionFetch('databases', 'POST', {
-      parent: { type: 'page_id', page_id: pageId },
-      title: [{ type: 'text', text: { content: '글리프 런칭 타임라인' } }],
-      properties: {
-        '항목명': { title: {} },
-        '카테고리': { select: { options: CAT_ORDER.map(c => ({ name: CAT_NAMES[c], color: 'default' })) } },
-        '담당자': { rich_text: {} },
-        '시작일': { date: {} },
-        '종료일': { date: {} },
-        '상태': { select: { options: [
-          { name: '시작 전', color: 'gray' },
-          { name: '진행 중', color: 'blue' },
-          { name: '완료', color: 'green' },
-          { name: '블로커', color: 'red' }
-        ]}},
-        '메모': { rich_text: {} },
-        'localId': { number: {} }
-      }
-    });
-
-    if (res.id) {
-      notionDbId = res.id;
-      document.getElementById('nDbId').value = notionDbId;
-      saveNotion();
-      info.textContent = 'DB 생성 완료! ID: ' + notionDbId;
-      updateNotionStatus();
-    } else {
-      info.textContent = '실패: ' + (res.message || JSON.stringify(res));
-    }
-  } catch(e) { info.textContent = '오류: ' + e.message; }
-};
-
-async function notionPush() {
-  if (!notionToken || !notionDbId) { openNotionModal(); return; }
-  const info = document.getElementById('notionSyncInfo');
-  const statusEl = document.getElementById('btnNotionSync');
-  statusEl.textContent = '⟳ 동기화 중...';
-
-  try {
-    // Get existing pages
-    const existing = await notionFetch(`databases/${notionDbId}/query`, 'POST', { page_size: 100 });
-    const existingMap = {};
-    if (existing.results) {
-      existing.results.forEach(p => {
-        const lid = p.properties.localId?.number;
-        if (lid) existingMap[lid] = p.id;
-      });
-    }
-
-    let created = 0, updated = 0;
-    for (const t of tasks) {
-      const STATUS_MAP = {'not-started':'시작 전','in-progress':'진행 중','done':'완료','blocked':'블로커'};
-      const props = {
-        '항목명': { title: [{ text: { content: t.name } }] },
-        '카테고리': { select: { name: CAT_NAMES[t.cat] } },
-        '담당자': { rich_text: [{ text: { content: t.assignee || '미지정' } }] },
-        '시작일': { date: { start: t.start } },
-        '종료일': { date: { start: t.end } },
-        '상태': { select: { name: STATUS_MAP[t.status] } },
-        '메모': { rich_text: [{ text: { content: t.note || '' } }] },
-        'localId': { number: t.id }
-      };
-
-      if (existingMap[t.id]) {
-        await notionFetch(`pages/${existingMap[t.id]}`, 'PATCH', { properties: props });
-        updated++;
-      } else {
-        await notionFetch('pages', 'POST', { parent: { database_id: notionDbId }, properties: props });
-        created++;
-      }
-    }
-
-    statusEl.textContent = '⟳ Notion 동기화';
-    alert(`동기화 완료! 생성: ${created}, 업데이트: ${updated}`);
-  } catch(e) {
-    statusEl.textContent = '⟳ Notion 동기화';
-    alert('동기화 오류: ' + e.message);
-  }
-}
-
-document.getElementById('btnNotionPush').onclick = notionPush;
-
-document.getElementById('btnNotionPull').onclick = async () => {
-  if (!notionToken || !notionDbId) { alert('먼저 연결 설정을 완료하세요'); return; }
-
-  try {
-    const res = await notionFetch(`databases/${notionDbId}/query`, 'POST', { page_size: 100 });
-    if (!res.results) { alert('데이터를 가져올 수 없습니다: ' + (res.message||'')); return; }
-
-    const STATUS_REV = {'시작 전':'not-started','진행 중':'in-progress','완료':'done','블로커':'blocked'};
-    const CAT_REV = {}; CAT_ORDER.forEach(c => CAT_REV[CAT_NAMES[c]] = c);
-
-    const pulled = res.results.map(p => {
-      const pr = p.properties;
-      return {
-        id: pr.localId?.number || nextId++,
-        name: pr['항목명']?.title?.[0]?.plain_text || '(없음)',
-        cat: CAT_REV[pr['카테고리']?.select?.name] || 'sales',
-        assignee: pr['담당자']?.rich_text?.[0]?.plain_text || '미지정',
-        start: pr['시작일']?.date?.start || '2026-04-01',
-        end: pr['종료일']?.date?.start || '2026-04-15',
-        status: STATUS_REV[pr['상태']?.select?.name] || 'not-started',
-        note: pr['메모']?.rich_text?.[0]?.plain_text || ''
-      };
-    });
-
-    if (confirm(`Notion에서 ${pulled.length}개 항목을 가져옵니다. 로컬 데이터를 덮어씁니다.`)) {
-      tasks = pulled;
-      nextId = Math.max(100, ...tasks.map(t=>t.id)) + 1;
-      // Ensure assignees list updated
-      tasks.forEach(t => { if(t.assignee && t.assignee!=='미지정' && !assignees.includes(t.assignee)) assignees.push(t.assignee); });
-      save(); render();
-      alert('다운로드 완료!');
-    }
-  } catch(e) { alert('오류: ' + e.message); }
-};
 
 // ═══════════════════════════════════════
 // TOOLBAR
@@ -1561,7 +1335,7 @@ sidebarOverlay.onclick = () => {
 
 // Keyboard
 document.addEventListener('keydown', e => {
-  if(e.key==='Escape'){ closeTaskModal(); closeAssigneeModal(); closeNotionModal(); sidebarEl.classList.remove('open'); sidebarOverlay.classList.remove('show'); }
+  if(e.key==='Escape'){ closeTaskModal(); closeAssigneeModal(); sidebarEl.classList.remove('open'); sidebarOverlay.classList.remove('show'); }
 });
 
 // Resize listener
