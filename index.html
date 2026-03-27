@@ -882,7 +882,7 @@ function bindGanttEvents(cols, colW) {
     c.addEventListener('click', e => {
       e.stopPropagation();
       const t = tasks.find(t=>t.id===+c.dataset.id);
-      if(t){t.status=t.status==='done'?'not-started':'done';saveTask(t);}
+      if(t){t.status=t.status==='done'?'not-started':'done';render();saveTask(t);}
     });
   });
 
@@ -1019,7 +1019,7 @@ function renderList() {
     h.addEventListener('click', () => { collapsed[h.dataset.cat]=!collapsed[h.dataset.cat]; saveCollapsed(); render(); });
   });
   el.querySelectorAll('.gantt-check').forEach(c => {
-    c.addEventListener('click', e => { e.stopPropagation(); const t=tasks.find(t=>t.id===+c.dataset.id); if(t){t.status=t.status==='done'?'not-started':'done';saveTask(t);} });
+    c.addEventListener('click', e => { e.stopPropagation(); const t=tasks.find(t=>t.id===+c.dataset.id); if(t){t.status=t.status==='done'?'not-started':'done';render();saveTask(t);} });
   });
   el.querySelectorAll('.list-row').forEach(r => {
     r.addEventListener('click', e => { if(!e.target.classList.contains('gantt-check'))openTaskModal(+r.dataset.id); });
@@ -1352,7 +1352,7 @@ function openAddModal(cat) {
   document.getElementById('taskModal').classList.add('show');
 }
 
-function closeTaskModal(){ document.getElementById('taskModal').classList.remove('show'); editingTask=null; }
+function closeTaskModal(){ document.getElementById('taskModal').classList.remove('show'); editingTask=null; render(); }
 document.getElementById('mClose').onclick = closeTaskModal;
 document.getElementById('mCancel').onclick = closeTaskModal;
 document.getElementById('taskModal').onclick = e=>{ if(e.target.id==='taskModal')closeTaskModal(); };
