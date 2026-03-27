@@ -580,7 +580,7 @@ async function undo() {
     const toDelete = [...oldTaskIds].filter(id => !newTaskIds.has(id));
     for (const id of toDelete) await sb.from('timeline_tasks').delete().eq('id', id);
     // Upsert all restored tasks
-    for (const t of tasks) await saveTask(t);
+    for (const t of tasks) await saveTask(t, true);
     // Restore assignees
     await saveAssignees();
   } catch (e) { console.error('undo sync error:', e); }
@@ -610,15 +610,17 @@ document.addEventListener('keydown', e => {
   }
 });
 
-async function saveTask(task) {
+async function saveTask(task, updateOrder) {
   try {
-    const idx = tasks.indexOf(task);
     const row = {
       id: task.id, name: task.name, cat: task.cat, assignee: task.assignee,
       start_date: task.start, end_date: task.end,
-      status: task.status, note: task.note || '', cost: task.cost || 0,
-      sort_order: idx >= 0 ? idx : tasks.length
+      status: task.status, note: task.note || '', cost: task.cost || 0
     };
+    if (updateOrder) {
+      const idx = tasks.indexOf(task);
+      row.sort_order = idx >= 0 ? idx : tasks.length;
+    }
     const { error } = await sb.from('timeline_tasks').upsert(row, { onConflict: 'id' });
     if (error) throw error;
   } catch (e) {
@@ -1429,7 +1431,7 @@ document.getElementById('mSave').onclick = () => {
     status:document.getElementById('mStatus').value, note:document.getElementById('mNote').value,
     cost:parseInt(document.getElementById('mCost').value)||0 };
   pushUndo();
-  if(editingTask) { Object.assign(editingTask, d); saveTask(editingTask); } else { const newTask = {id:nextId++,...d}; tasks.push(newTask); saveTask(newTask); }
+  if(editingTask) { Object.assign(editingTask, d); saveTask(editingTask); } else { const newTask = {id:nextId++,...d}; tasks.push(newTask); saveTask(newTask, true); }
   closeTaskModal();
 };
 
