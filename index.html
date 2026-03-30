@@ -38,7 +38,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
 }
 
 /* ── Sidebar ── */
-.sidebar{width:300px;background:var(--glass-strong);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-right:var(--glass-border-light);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;box-shadow:var(--glass-highlight), 1px 0 0 rgba(255,255,255,.3)}
+.sidebar{width:300px;background:var(--glass-strong);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-right:var(--glass-border-light);overflow:hidden;flex-shrink:0;display:flex;flex-direction:column;box-shadow:var(--glass-highlight), 1px 0 0 rgba(255,255,255,.3)}
+.sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch}
 .sidebar-header{padding:20px 16px 14px;border-bottom:1px solid rgba(0,0,0,.05)}
 .sidebar-header h1{font-size:19px;font-weight:700;color:var(--text-primary);margin-bottom:3px}
 .sidebar-header p{font-size:13px;color:var(--text-muted)}
@@ -72,8 +73,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
 .sb-open-btn{position:fixed;top:12px;left:8px;z-index:20;width:28px;height:28px;border-radius:6px;background:var(--glass);backdrop-filter:var(--glass-blur-sm);-webkit-backdrop-filter:var(--glass-blur-sm);border:var(--glass-border);color:var(--text-muted);font-size:14px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .15s;box-shadow:var(--glass-highlight),var(--glass-shadow)}
 .sb-open-btn:hover{background:var(--glass-strong);color:var(--text-primary)}
 .sb-open-btn.show{display:flex}
-.sb-spacer{flex:1}
-.sb-bottom{padding:8px 10px;border-top:1px solid rgba(0,0,0,.05)}
+.sb-bottom{padding:8px 10px;border-top:1px solid rgba(0,0,0,.05);flex-shrink:0}
 .sb-bottom .btn{width:100%;justify-content:center}
 
 /* ── Main ── */
@@ -302,12 +302,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
         <span id="totalCostVal">₩0</span>
       </div>
     </div>
-    <div class="sb-title sb-toggle" id="toggleCat"><span class="sb-toggle-arrow">▼</span> 카테고리</div>
-    <div class="sb-list sb-collapsible" id="catList"></div>
-    <div class="sb-title sb-toggle" id="toggleAssignee"><span class="sb-toggle-arrow">▼</span> 담당자</div>
-    <div class="sb-list sb-collapsible" id="assigneeList"></div>
-    <div class="sb-spacer"></div>
+    <div class="sb-scroll">
+      <div class="sb-title sb-toggle" id="toggleCat"><span class="sb-toggle-arrow">▼</span> 카테고리</div>
+      <div class="sb-list sb-collapsible" id="catList"></div>
+      <div class="sb-title sb-toggle" id="toggleAssignee"><span class="sb-toggle-arrow">▼</span> 담당자</div>
+      <div class="sb-list sb-collapsible" id="assigneeList"></div>
+    </div>
     <div class="sb-bottom">
+      <button class="btn" id="btnManageCats" style="margin-bottom:6px">카테고리 관리</button>
       <button class="btn" id="btnManageAssignees">담당자 관리</button>
     </div>
   </div>
@@ -383,23 +385,49 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background:
 </div>
 
 
+<!-- Category Modal -->
+<div class="modal-bg" id="catModal">
+  <div class="modal">
+    <div class="modal-top"><h3>카테고리 관리</h3><button class="modal-x" id="cmClose">&times;</button></div>
+    <div class="modal-body">
+      <div class="fld"><label>새 카테고리</label>
+        <div style="display:flex;gap:8px"><input id="newCatName" placeholder="카테고리명" style="flex:1"><button class="btn btn-primary" id="btnAddCat">추가</button></div>
+      </div>
+      <div id="catManageList" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════
-const COLORS = {sales:'#f59e0b',dev:'#10b981',package:'#6366f1',content:'#ec4899',channel:'#3b82f6',logistics:'#8b5cf6',legal:'#ef4444',vmd:'#14b8a6'};
-const GRADIENTS = {
-  sales:'linear-gradient(135deg,#f59e0b,#f97316)',
-  dev:'linear-gradient(135deg,#10b981,#34d399)',
-  package:'linear-gradient(135deg,#6366f1,#818cf8)',
-  content:'linear-gradient(135deg,#ec4899,#f472b6)',
-  channel:'linear-gradient(135deg,#3b82f6,#60a5fa)',
-  logistics:'linear-gradient(135deg,#8b5cf6,#a78bfa)',
-  legal:'linear-gradient(135deg,#ef4444,#f87171)',
-  vmd:'linear-gradient(135deg,#14b8a6,#2dd4bf)'
-};
-const CAT_NAMES = {sales:'영업/가격',dev:'제품 개발',package:'패키지',content:'콘텐츠',channel:'판매 채널',logistics:'물류/운영',legal:'법률',vmd:'VMD'};
-const CAT_ORDER = Object.keys(CAT_NAMES);
+const DEFAULT_CATS = [
+  {key:'sales',name:'영업/가격',color:'#f59e0b'},
+  {key:'dev',name:'제품 개발',color:'#10b981'},
+  {key:'package',name:'패키지',color:'#6366f1'},
+  {key:'content',name:'콘텐츠',color:'#ec4899'},
+  {key:'channel',name:'판매 채널',color:'#3b82f6'},
+  {key:'logistics',name:'물류/운영',color:'#8b5cf6'},
+  {key:'legal',name:'법률',color:'#ef4444'},
+  {key:'vmd',name:'VMD',color:'#14b8a6'}
+];
+const PALETTE = ['#f59e0b','#10b981','#6366f1','#ec4899','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#e11d48','#7c3aed','#0ea5e9'];
+const GRAD2 = {'#f59e0b':'#f97316','#10b981':'#34d399','#6366f1':'#818cf8','#ec4899':'#f472b6','#3b82f6':'#60a5fa','#8b5cf6':'#a78bfa','#ef4444':'#f87171','#14b8a6':'#2dd4bf','#f97316':'#fb923c','#06b6d4':'#22d3ee','#84cc16':'#a3e635','#e11d48':'#f43f5e','#7c3aed':'#8b5cf6','#0ea5e9':'#38bdf8'};
+let categories = [...DEFAULT_CATS];
+let COLORS = {}, GRADIENTS = {}, CAT_NAMES = {}, CAT_ORDER = [];
+
+function rebuildCatMaps() {
+  COLORS = {}; GRADIENTS = {}; CAT_NAMES = {}; CAT_ORDER = [];
+  categories.forEach(c => {
+    CAT_ORDER.push(c.key);
+    CAT_NAMES[c.key] = c.name;
+    COLORS[c.key] = c.color;
+    const g2 = GRAD2[c.color] || c.color;
+    GRADIENTS[c.key] = `linear-gradient(135deg,${c.color},${g2})`;
+  });
+}
+rebuildCatMaps();
 const A_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#8b5cf6','#14b8a6','#f97316','#06b6d4'];
 const STATUS_KO = {'not-started':'시작 전','in-progress':'진행 중','done':'완료','blocked':'블로커'};
 
@@ -538,7 +566,39 @@ async function loadAssignees() {
   if (!assignees.includes('미지정')) assignees.unshift('미지정');
 }
 
+async function loadCategories() {
+  try {
+    const { data, error } = await sb.from('timeline_categories').select('*').order('sort_order', { ascending: true });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      categories = data.map(r => ({ key: r.key, name: r.name, color: r.color }));
+    } else {
+      const rows = DEFAULT_CATS.map((c, i) => ({ key: c.key, name: c.name, color: c.color, sort_order: i }));
+      const { error: insertErr } = await sb.from('timeline_categories').insert(rows);
+      if (insertErr) throw insertErr;
+      categories = [...DEFAULT_CATS];
+    }
+  } catch (e) {
+    console.error('loadCategories error:', e);
+    if (!categories.length) categories = [...DEFAULT_CATS];
+  }
+  rebuildCatMaps();
+}
+
+async function saveCategories() {
+  try {
+    await sb.from('timeline_categories').delete().neq('key', '___none___');
+    const rows = categories.map((c, i) => ({ key: c.key, name: c.name, color: c.color, sort_order: i }));
+    const { error } = await sb.from('timeline_categories').insert(rows);
+    if (error) throw error;
+  } catch (e) {
+    console.error('saveCategories error:', e);
+  }
+  rebuildCatMaps();
+}
+
 async function load() {
+  await loadCategories();
   await loadTasks();
   await loadAssignees();
   try { collapsed = JSON.parse(localStorage.getItem(LS + 'collapsed')) || {}; } catch (e) { collapsed = {}; }
@@ -558,6 +618,7 @@ function pushUndo() {
   undoStack.push({
     tasks: JSON.parse(JSON.stringify(tasks)),
     assignees: [...assignees],
+    categories: JSON.parse(JSON.stringify(categories)),
     nextId: nextId
   });
   if (undoStack.length > MAX_UNDO) undoStack.shift();
@@ -571,7 +632,9 @@ async function undo() {
 
   tasks = snap.tasks;
   assignees = snap.assignees;
+  categories = snap.categories || categories;
   nextId = snap.nextId;
+  rebuildCatMaps();
   render();
 
   // Sync restored state to Supabase
@@ -581,8 +644,9 @@ async function undo() {
     for (const id of toDelete) await sb.from('timeline_tasks').delete().eq('id', id);
     // Upsert all restored tasks
     for (const t of tasks) await saveTask(t, true);
-    // Restore assignees
+    // Restore assignees & categories
     await saveAssignees();
+    await saveCategories();
   } catch (e) { console.error('undo sync error:', e); }
 
   showUndoToast();
@@ -670,6 +734,10 @@ sb.channel('timeline')
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'timeline_assignees' }, async () => {
     await loadAssignees();
+    render();
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'timeline_categories' }, async () => {
+    await loadCategories();
     render();
   })
   .subscribe();
@@ -855,7 +923,7 @@ function renderTimeline() {
     const isC = !!collapsed[cat];
     const dn = ct.filter(t=>t.status==='done').length;
 
-    html += `<div class="gantt-group">`;
+    html += `<div class="gantt-group" data-gcat="${cat}" draggable="true">`;
     html += `<div class="gantt-group-header" data-cat="${cat}">
       <span class="gantt-toggle ${isC?'collapsed':''}">▼</span>
       <div class="gantt-group-color" style="background:${COLORS[cat]}"></div>
@@ -938,6 +1006,48 @@ function bindGanttEvents(cols, colW) {
       const cat = h.dataset.cat;
       collapsed[cat] = !collapsed[cat];
       saveCollapsed(); render();
+    });
+  });
+
+  // Category group drag reorder
+  let dragCat = null;
+  el.querySelectorAll('.gantt-group[data-gcat]').forEach(grp => {
+    grp.addEventListener('dragstart', e => {
+      if (e.target.closest('.gantt-row')) { dragCat = null; return; }
+      dragCat = grp.dataset.gcat;
+      grp.style.opacity = '0.4';
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/cat', dragCat);
+    });
+    grp.addEventListener('dragend', () => {
+      grp.style.opacity = '1';
+      el.querySelectorAll('.gantt-group').forEach(g => g.style.borderTop = '');
+      dragCat = null;
+    });
+    grp.addEventListener('dragover', e => {
+      if (!dragCat) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      el.querySelectorAll('.gantt-group').forEach(g => g.style.borderTop = '');
+      const rect = grp.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) grp.style.borderTop = '2px solid #6366f1';
+    });
+    grp.addEventListener('dragleave', () => { grp.style.borderTop = ''; });
+    grp.addEventListener('drop', e => {
+      if (!dragCat) return;
+      e.preventDefault();
+      const targetCat = grp.dataset.gcat;
+      if (dragCat === targetCat) return;
+      pushUndo();
+      const fromIdx = categories.findIndex(c => c.key === dragCat);
+      const toIdx = categories.findIndex(c => c.key === targetCat);
+      const [moved] = categories.splice(fromIdx, 1);
+      const rect = grp.getBoundingClientRect();
+      const insertIdx = e.clientY < rect.top + rect.height / 2 ? toIdx : toIdx + 1;
+      const adj = insertIdx > fromIdx ? insertIdx - 1 : insertIdx;
+      categories.splice(adj, 0, moved);
+      rebuildCatMaps();
+      saveCategories(); render();
     });
   });
 
@@ -1487,6 +1597,103 @@ function addAssignee() {
 document.getElementById('btnAddA').onclick = e => { e.preventDefault(); addAssignee(); };
 document.getElementById('newAName').onkeydown = e=>{ if(e.key==='Enter'){e.preventDefault(); addAssignee();} };
 
+
+// ═══════════════════════════════════════
+// CATEGORY MODAL
+// ═══════════════════════════════════════
+function openCatModal(){ document.getElementById('catModal').classList.add('show'); renderCatManage(); }
+function closeCatModal(){ document.getElementById('catModal').classList.remove('show'); }
+document.getElementById('btnManageCats').onclick = openCatModal;
+document.getElementById('cmClose').onclick = closeCatModal;
+document.getElementById('catModal').onclick = e=>{ if(e.target.id==='catModal')closeCatModal(); };
+
+function renderCatManage() {
+  const el = document.getElementById('catManageList');
+  let h = '';
+  categories.forEach((c, i) => {
+    const cnt = tasks.filter(t=>t.cat===c.key).length;
+    h += `<div class="cat-manage-row" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:grab">
+      <span style="color:#555;font-size:11px;cursor:grab" title="드래그하여 순서 변경">⋮⋮</span>
+      <div style="width:12px;height:12px;border-radius:3px;background:${c.color};flex-shrink:0"></div>
+      <span style="flex:1;font-size:12px;color:#ccc">${c.name}</span>
+      <span style="font-size:10px;color:#555">${cnt}건</span>
+      <button class="btn btn-del btn-sm" data-key="${c.key}" title="삭제">삭제</button>
+    </div>`;
+  });
+  if(!h) h='<p style="font-size:11px;color:#555;padding:8px 0">등록된 카테고리 없음</p>';
+  el.innerHTML = h;
+
+  // Delete handlers
+  el.querySelectorAll('.btn-del').forEach(b => b.onclick = () => {
+    const key = b.dataset.key;
+    const cnt = tasks.filter(t=>t.cat===key).length;
+    if(cnt>0 && !confirm(`"${CAT_NAMES[key]}" 삭제 시 ${cnt}건의 항목도 함께 삭제됩니다.`)) return;
+    pushUndo();
+    if(cnt>0) {
+      const delIds = tasks.filter(t=>t.cat===key).map(t=>t.id);
+      tasks = tasks.filter(t=>t.cat!==key);
+      delIds.forEach(id => deleteTask(id));
+    }
+    categories = categories.filter(x=>x.key!==key);
+    if(activeCat===key) activeCat=null;
+    saveCategories();
+    renderCatManage(); render();
+  });
+
+  // Drag reorder
+  let dragIdx = null;
+  el.querySelectorAll('.cat-manage-row').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      dragIdx = +row.dataset.idx;
+      row.style.opacity = '0.4';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => {
+      row.style.opacity = '1';
+      el.querySelectorAll('.cat-manage-row').forEach(r => r.style.borderTop = '');
+      dragIdx = null;
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      el.querySelectorAll('.cat-manage-row').forEach(r => r.style.borderTop = '');
+      const rect = row.getBoundingClientRect();
+      if(e.clientY < rect.top + rect.height/2) row.style.borderTop = '2px solid #6366f1';
+    });
+    row.addEventListener('dragleave', () => { row.style.borderTop = ''; });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetIdx = +row.dataset.idx;
+      if(dragIdx===targetIdx) return;
+      pushUndo();
+      const [moved] = categories.splice(dragIdx, 1);
+      const rect = row.getBoundingClientRect();
+      const insertIdx = e.clientY < rect.top + rect.height/2 ? targetIdx : targetIdx + 1;
+      const adjusted = insertIdx > dragIdx ? insertIdx - 1 : insertIdx;
+      categories.splice(adjusted, 0, moved);
+      saveCategories();
+      renderCatManage(); render();
+    });
+  });
+}
+
+function addCategory() {
+  const inp = document.getElementById('newCatName'), name = inp.value.trim();
+  if(!name) return;
+  // Generate unique key
+  const key = name.toLowerCase().replace(/[^a-z0-9가-힣]/g,'_').replace(/_+/g,'_') + '_' + Date.now();
+  if(categories.find(c=>c.name===name)){inp.value='';return;}
+  pushUndo();
+  // Pick a color not yet used
+  const usedColors = categories.map(c=>c.color);
+  const color = PALETTE.find(p=>!usedColors.includes(p)) || PALETTE[categories.length % PALETTE.length];
+  categories.push({key, name, color});
+  saveCategories();
+  inp.value='';
+  renderCatManage(); render();
+}
+document.getElementById('btnAddCat').onclick = e => { e.preventDefault(); addCategory(); };
+document.getElementById('newCatName').onkeydown = e=>{ if(e.key==='Enter'){e.preventDefault(); addCategory();} };
 
 // ═══════════════════════════════════════
 // TOOLBAR
