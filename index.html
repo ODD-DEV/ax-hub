@@ -1783,11 +1783,34 @@ let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer=setTimeout(render, 150); });
 
 // ═══════════════════════════════════════
+// SCROLL TO TODAY
+// ═══════════════════════════════════════
+function scrollToToday() {
+  if (currentView !== 'timeline') return;
+  const el = document.getElementById('content');
+  const cols = getColumns();
+  const colW = getColWidth(cols);
+  const leftW = getLeftW();
+  const todayOff = dayOff(new Date().toISOString().slice(0,10));
+  let todayPx = 0;
+  for (const c of cols) {
+    if (todayOff < c.startOff + c.days) {
+      todayPx += ((todayOff - c.startOff) / c.days) * colW;
+      break;
+    }
+    todayPx += colW;
+  }
+  const viewW = el.clientWidth - leftW;
+  el.scrollLeft = Math.max(0, todayPx - viewW * 0.3);
+}
+
+// ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
 (async () => {
   await load();
   render();
+  requestAnimationFrame(() => scrollToToday());
 })();
 </script>
 </body>
